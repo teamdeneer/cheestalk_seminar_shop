@@ -279,8 +279,8 @@
                 <div class="file-upload" id="posterUpload">
                     <div class="file-upload-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>
                     <p class="file-upload-text">클릭하여 이미지를 업로드하세요</p>
-                    <p class="file-upload-hint">이미지 파일 가능 (최대 10MB)</p>
-                    <input type="file" id="posterFile" accept="image/*">
+                    <p class="file-upload-hint">이미지 파일 최대 10장 (각 10MB 이하)</p>
+                    <input type="file" id="posterFile" accept="image/*" multiple>
                     <div class="file-preview"><span class="file-name" id="posterFileName"></span></div>
                     <div class="upload-progress"><div class="progress-bar-small"><div class="progress-bar-fill" id="posterProgress" style="width: 0%"></div></div></div>
                 </div>
@@ -368,7 +368,69 @@
             };
         }
         setupUpload('thumbnailUpload', 'thumbnailFile', 'thumbnailFileName', 'thumbnailProgress', 'thumbnailPreviewContainer', 'thumbnailPreview', 'thumbnail');
-        setupUpload('posterUpload', 'posterFile', 'posterFileName', 'posterProgress', 'posterPreviewContainer', 'posterPreview', 'poster');
+        // 포스터 다중 업로드
+(function() {
+    const area = document.getElementById('posterUpload');
+    const input = document.getElementById('posterFile');
+    const name = document.getElementById('posterFileName');
+    const previewCont = document.getElementById('posterPreviewContainer');
+    
+    area.onclick = () => input.click();
+    
+    input.onchange = async e => {
+        const files = Array.from(e.target.files).slice(0, 10); // 최대 10개
+        if (!files.length) return;
+        
+        name.textContent = `${files.length}개 파일 업로드 중...`;
+        area.classList.remove('has-file');
+        area.classList.add('uploading');
+        previewCont.innerHTML = '';
+        previewCont.classList.remove('visible');
+        
+        let uploaded = 0;
+        const urls = [];
+        
+        for (const file of files) {
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('upload_preset', UPLOAD_PRESET);
+                fd.append('folder', 'cheeztalk_seminars');
+                
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                    method: 'POST',
+                    body: fd
+                });
+                const data = await res.json();
+                urls.push(data.secure_url);
+                uploaded++;
+                document.getElementById('posterProgress').style.width = Math.round(uploaded / files.length * 100) + '%';
+            } catch (err) {
+                console.error('Upload failed:', file.name);
+            }
+        }
+        
+        area.classList.remove('uploading');
+        
+        if (urls.length > 0) {
+            area.classList.add('has-file');
+            name.textContent = `✓ ${urls.length}개 이미지 업로드 완료`;
+            uploadedImages.poster = urls;
+            
+            // 미리보기 표시
+            previewCont.innerHTML = urls.map(url => 
+                `<img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin: 4px;">`
+            ).join('');
+            previewCont.style.display = 'flex';
+            previewCont.style.flexWrap = 'wrap';
+            previewCont.style.gap = '4px';
+            previewCont.classList.add('visible');
+        } else {
+            alert('업로드 실패. 다시 시도해주세요.');
+            name.textContent = '';
+        }
+    };
+})();
 
         function updateProgress() {
             document.querySelector('.progress-fill').style.width = (currentStep / 4 * 100 - 12.5) + '%';
