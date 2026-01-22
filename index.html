@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>치즈톡 세미나/강의 등록 신청서</title>
+    <title>치즈톡 세미나/강의 광고 상품 마켓</title>
     
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -166,7 +166,33 @@
     </style>
 </head>
 <body>
-    <header class="header"><div class="header-content"><a href="https://cheestalk.com/"><img src="치즈톡로고.png" alt="치즈톡" class="logo" style="cursor: pointer;"></a></div></header>
+    <header class="header">
+        <div class="header-content" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <a href="https://cheestalk.com/">
+                <img src="치즈톡로고.png" alt="치즈톡" class="logo" style="cursor: pointer;">
+            </a>
+            <button onclick="ChannelIO('showMessenger')" style="
+                background: none; 
+                border: 1px solid var(--border); 
+                border-radius: 8px;
+                color: var(--text-light); 
+                font-size: 13px; 
+                font-weight: 500; 
+                font-family: 'Noto Sans KR', sans-serif;
+                cursor: pointer; 
+                padding: 8px 12px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s ease;
+            " onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-light)';">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                문의하기
+            </button>
+        </div>
+    </header>
     <div class="progress-container"><div class="progress-inner">
         <div class="progress-steps">
             <div class="progress-step"><div class="step-number active" data-step="1">1</div><span class="step-label active">상품 선택</span></div>
@@ -420,7 +446,10 @@
     if (document.readyState === 'complete') { l(); }
     else { window.addEventListener('DOMContentLoaded', l); window.addEventListener('load', l); }
   })();
-  ChannelIO('boot', { "pluginKey": "3a8d1cb5-2c5b-476b-bfb5-e39e26cc36ee" });
+ChannelIO('boot', { 
+    "pluginKey": "3a8d1cb5-2c5b-476b-bfb5-e39e26cc36ee",
+    "hideChannelButtonOnBoot": true 
+});
 </script>
 </body>
 </html>
