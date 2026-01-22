@@ -368,69 +368,105 @@
             };
         }
         setupUpload('thumbnailUpload', 'thumbnailFile', 'thumbnailFileName', 'thumbnailProgress', 'thumbnailPreviewContainer', 'thumbnailPreview', 'thumbnail');
-        // 포스터 다중 업로드
-(function() {
-    const area = document.getElementById('posterUpload');
-    const input = document.getElementById('posterFile');
-    const name = document.getElementById('posterFileName');
-    const previewCont = document.getElementById('posterPreviewContainer');
-    
-    area.onclick = () => input.click();
-    
-    input.onchange = async e => {
-        const files = Array.from(e.target.files).slice(0, 10); // 최대 10개
-        if (!files.length) return;
+    // 포스터 다중 업로드 (누적)
+    (function() {
+        const area = document.getElementById('posterUpload');
+        const input = document.getElementById('posterFile');
+        const name = document.getElementById('posterFileName');
+        const previewCont = document.getElementById('posterPreviewContainer');
         
-        name.textContent = `${files.length}개 파일 업로드 중...`;
-        area.classList.remove('has-file');
-        area.classList.add('uploading');
-        previewCont.innerHTML = '';
-        previewCont.classList.remove('visible');
+        uploadedImages.poster = []; // 배열로 초기화
         
-        let uploaded = 0;
-        const urls = [];
+        area.onclick = () => input.click();
         
-        for (const file of files) {
-            try {
-                const fd = new FormData();
-                fd.append('file', file);
-                fd.append('upload_preset', UPLOAD_PRESET);
-                fd.append('folder', 'cheeztalk_seminars');
-                
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                    method: 'POST',
-                    body: fd
-                });
-                const data = await res.json();
-                urls.push(data.secure_url);
-                uploaded++;
-                document.getElementById('posterProgress').style.width = Math.round(uploaded / files.length * 100) + '%';
-            } catch (err) {
-                console.error('Upload failed:', file.name);
-            }
-        }
-        
-        area.classList.remove('uploading');
-        
-        if (urls.length > 0) {
-            area.classList.add('has-file');
-            name.textContent = `✓ ${urls.length}개 이미지 업로드 완료`;
-            uploadedImages.poster = urls;
+        input.onchange = async e => {
+            const files = Array.from(e.target.files);
+            if (!files.length) return;
             
-            // 미리보기 표시
-            previewCont.innerHTML = urls.map(url => 
-                `<img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin: 4px;">`
+            // 최대 10개 제한 체크
+            const remaining = 10 - uploadedImages.poster.length;
+            if (remaining <= 0) {
+                alert('최대 10장까지만 업로드할 수 있습니다.');
+                return;
+            }
+            
+            const filesToUpload = files.slice(0, remaining);
+            if (files.length > remaining) {
+                alert(`최대 10장까지만 가능합니다. ${remaining}장만 업로드됩니다.`);
+            }
+            
+            name.textContent = `${filesToUpload.length}개 파일 업로드 중...`;
+            area.classList.add('uploading');
+            
+            let uploaded = 0;
+            
+            for (const file of filesToUpload) {
+                try {
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('upload_preset', UPLOAD_PRESET);
+                    fd.append('folder', 'cheeztalk_seminars');
+                    
+                    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                        method: 'POST',
+                        body: fd
+                    });
+                    const data = await res.json();
+                    uploadedImages.poster.push(data.secure_url);
+                    uploaded++;
+                    document.getElementById('posterProgress').style.width = Math.round(uploaded / filesToUpload.length * 100) + '%';
+                } catch (err) {
+                    console.error('Upload failed:', file.name);
+                }
+            }
+            
+            area.classList.remove('uploading');
+            document.getElementById('posterProgress').style.width = '0%';
+            
+            if (uploadedImages.poster.length > 0) {
+                area.classList.add('has-file');
+                name.textContent = `✓ 총 ${uploadedImages.poster.length}개 이미지 (최대 10개)`;
+                
+                // 미리보기 갱신
+                previewCont.innerHTML = uploadedImages.poster.map((url, i) => 
+                    `<div style="position: relative; display: inline-block;">
+                        <img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                        <button onclick="removePosters(${i})" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: none; background: #FF3572; color: white; font-size: 12px; cursor: pointer; line-height: 1;">×</button>
+                    </div>`
+                ).join('');
+                previewCont.style.display = 'flex';
+                previewCont.style.flexWrap = 'wrap';
+                previewCont.style.gap = '8px';
+                previewCont.style.marginTop = '16px';
+                previewCont.classList.add('visible');
+            }
+            
+            input.value = ''; // 같은 파일 다시 선택 가능하게
+        };
+    })();
+    
+    // 포스터 삭제 함수
+    function removePoster(index) {
+        uploadedImages.poster.splice(index, 1);
+        const previewCont = document.getElementById('posterPreviewContainer');
+        const name = document.getElementById('posterFileName');
+        const area = document.getElementById('posterUpload');
+        
+        if (uploadedImages.poster.length > 0) {
+            name.textContent = `✓ 총 ${uploadedImages.poster.length}개 이미지 (최대 10개)`;
+            previewCont.innerHTML = uploadedImages.poster.map((url, i) => 
+                `<div style="position: relative; display: inline-block;">
+                    <img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                    <button onclick="removePoster(${i})" style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: none; background: #FF3572; color: white; font-size: 12px; cursor: pointer; line-height: 1;">×</button>
+                </div>`
             ).join('');
-            previewCont.style.display = 'flex';
-            previewCont.style.flexWrap = 'wrap';
-            previewCont.style.gap = '4px';
-            previewCont.classList.add('visible');
         } else {
-            alert('업로드 실패. 다시 시도해주세요.');
+            area.classList.remove('has-file');
             name.textContent = '';
+            previewCont.innerHTML = '';
+            previewCont.classList.remove('visible');
         }
-    };
-})();
+    }
 
         function updateProgress() {
             document.querySelector('.progress-fill').style.width = (currentStep / 4 * 100 - 12.5) + '%';
