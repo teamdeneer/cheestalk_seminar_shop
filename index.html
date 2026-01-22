@@ -514,7 +514,7 @@
                 seminarTitle: document.getElementById('seminarTitle').value, seminarDesc: document.getElementById('seminarDesc').value || '', thumbnailUrl: uploadedImages.thumbnail || '', posterUrl: uploadedImages.poster || ''
             };
             try {
-                await fetch('https://script.google.com/macros/s/AKfycbxPjeSNygX6PQiB2cuY0DhHa2s3E70mTPgzBOPW0s-g3xmLgrLaFuOXVG5_ik3c_sg1jw/exec', { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                await fetch('https://script.google.com/macros/s/AKfycbxDWS_9e_kDngVkf-fhXz1hHxvH2EJGSgClcKsxKUUkxX-fcPlL0NgtR4XynvE1tADfVQ/exec', { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 document.getElementById('loadingOverlay').classList.remove('active');
                 alert('신청 정보가 저장되었습니다!\n결제 페이지로 이동합니다.');
                 window.location.href = paymentLinks[selectedProducts.sort().join(',')];
